@@ -1,0 +1,71 @@
+/* Google font — Inter (light, modern) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+
+
+
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+
+:root{
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --muted: #6b7280;
+  --primary: #3b82f6;
+  --radius: 12px;
+  --glass: rgba(255,255,255,0.6);
+}
+
+/* Tailwind base
+@tailwind base;
+@tailwind components;
+@tailwind utilities; */
+
+/* base reset / sensible defaults */
+html,body,#root {
+  height: 100%;
+  background-color: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  color: #0f172a;
+  background-color: var(--bg);
+}
+
+/* small utilities */
+.container-outer {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* subtle focus ring for accessibility */
+:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+  border-radius: 8px;
+}
+
+/* small animation helper */
+.animate-slide-up {
+  animation: slideup .22s cubic-bezier(.0,.95,.25,1) both;
+}
+@keyframes slideup {
+  from { transform: translateY(6px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* temporary: hide accidental audio/video native controls that appear in the layout */
+audio[controls], video[controls] {
+  display: none !important;
+}
