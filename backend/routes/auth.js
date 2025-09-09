@@ -64,10 +64,8 @@ router.post('/login', async (req, res) => {
 });
 
 // ====== Google OAuth ======
-// Step 1: Redirect to Google
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-// Step 2: Google callback
 router.get(
   '/google/callback',
   passport.authenticate('google', { session: false, failureRedirect: '/auth/failure' }),
@@ -79,11 +77,9 @@ router.get(
         { expiresIn: '1d' }
       );
 
-      // Remove double slash by trimming
       const frontendUrl = process.env.FRONTEND_URL.replace(/\/$/, '');
-      const redirectUrl = `${frontendUrl}/dashboard?token=${token}`;
-
-      console.log("Redirecting to:", redirectUrl); // for debugging
+      const redirectUrl = `${frontendUrl}/oauth-redirect?token=${token}`;
+      console.log("Redirecting to:", redirectUrl);
       res.redirect(redirectUrl);
     } catch (err) {
       console.error("Google callback error:", err);
@@ -91,16 +87,6 @@ router.get(
     }
   }
 );
-
-
-
-
-
-
-
-
-
-
 
 // ====== Get current user ======
 router.get('/me', authProtection, async (req, res) => {
@@ -114,7 +100,6 @@ router.get('/me', authProtection, async (req, res) => {
   }
 });
 
-// ====== Optional failure endpoint ======
 router.get('/failure', (req, res) => {
   res.status(401).json({ msg: 'OAuth login failed' });
 });

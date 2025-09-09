@@ -11,6 +11,7 @@ import SearchPage from "./pages/SearchPage";
 import ProjectsPage from "./pages/ProjectsPage";
 import SettingsPage from "./pages/SettingsPage";
 import Register from "./pages/Register";
+import OAuthRedirect from "./pages/OAuthRedirect";
 
 import ErrorBoundary from "./components/ErrorBoundary";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -29,6 +30,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/" element={<Home />} />
+            <Route path="/oauth-redirect" element={<OAuthRedirect />} />
 
             {/* Protected Layout Routes */}
             <Route
