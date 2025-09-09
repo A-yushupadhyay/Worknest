@@ -73,17 +73,34 @@ router.get(
   passport.authenticate('google', { session: false, failureRedirect: '/auth/failure' }),
   (req, res) => {
     try {
-      const token = jwt.sign({ id: req.user._id, email: req.user.email }, process.env.JWT_SECRET, {
-        expiresIn: '1d',
-      });
-      const redirectUrl = `${process.env.FRONTEND_URL}/dashboard?token=${token}`;
+      const token = jwt.sign(
+        { id: req.user._id, email: req.user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '1d' }
+      );
+
+      // Remove double slash by trimming
+      const frontendUrl = process.env.FRONTEND_URL.replace(/\/$/, '');
+      const redirectUrl = `${frontendUrl}/dashboard?token=${token}`;
+
+      console.log("Redirecting to:", redirectUrl); // for debugging
       res.redirect(redirectUrl);
     } catch (err) {
       console.error("Google callback error:", err);
-      res.redirect(`${process.env.FRONTEND_URL}/login?error=oauth_failed`);
+      res.redirect(`${process.env.FRONTEND_URL.replace(/\/$/, '')}/login?error=oauth_failed`);
     }
   }
 );
+
+
+
+
+
+
+
+
+
+
 
 // ====== Get current user ======
 router.get('/me', authProtection, async (req, res) => {
