@@ -10,7 +10,7 @@ const Login: React.FC = () => {
 
   // Google OAuth
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:8000/api/auth/google";
+    window.location.href = "https://worknest-0zer.onrender.com/api/auth/google";
   };
 
   // Guest login (production-level)
