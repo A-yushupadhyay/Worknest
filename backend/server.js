@@ -12,66 +12,43 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const server = http.createServer(app);
 
-// ===================
-// Environment Variables
-// ===================
+// basic setup
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) {
-  console.error('❌ MONGO_URI not set in env. Exiting.');
+  console.error('MONGO_URI not set in env. Exiting.');
   process.exit(1);
 }
-
 if (!process.env.JWT_SECRET) {
-  console.warn('⚠️ JWT_SECRET not set — auth endpoints will fail.');
+  console.warn('Warning: JWT_SECRET not set — auth endpoints will fail.');
 }
 
-// Allowed CORS origins (local + deployed frontend)
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://worknest-delta.vercel.app'
-];
+// socket.io
+const io = new Server(server, {
+  cors: { origin: FRONTEND_URL, credentials: true }
+});
 
-// ===================
-// CORS Middleware
-// ===================
-app.use(cors({
-  origin: function(origin, callback) {
-    // allow requests with no origin (Postman, server-to-server)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      return callback(new Error(`CORS policy: origin ${origin} not allowed`));
-    }
-  },
-  credentials: true
-}));
-
-// ===================
-// Middlewares
-// ===================
+// middlewares
+app.use(cors({ origin: FRONTEND_URL, credentials: true }));
 app.use(express.json());
 app.use(passport.initialize());
-require('./config/passport'); // passport strategies
+require('./config/passport'); // if present
 
-// Rate limiter
+// rate limiter
 const searchLimiter = rateLimit({
-  windowMs: 15 * 1000, // 15 seconds
+  windowMs: 15 * 1000,
   max: 8,
   standardHeaders: true,
   legacyHeaders: false
 });
 
-// Attach Socket.IO to requests
+// attach io
 app.use((req, res, next) => {
   req.io = io;
   next();
 });
 
-// ===================
-// API Routes
-// ===================
+// API routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/orgs', require('./routes/orgs'));
 app.use('/api/projects', require('./routes/projects'));
@@ -84,27 +61,19 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/search', searchLimiter, require('./routes/search'));
 
-// Health check
+// health check
 app.get('/health', (req, res) => res.json({ ok: true }));
 
-// ===================
-// Socket.IO Setup
-// ===================
-const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-    credentials: true
-  }
-});
-
+// socket.io handlers
 io.on('connection', (socket) => {
-  console.log('🔌 Socket connected:', socket.id);
+  console.log('🔌 socket connected', socket.id);
 
   socket.on('auth', ({ token }) => {
     try {
       const payload = jwt.verify(token, process.env.JWT_SECRET);
-      socket.join(`user_${payload.id}`);
-      console.log(`✅ User ${payload.id} joined private room`);
+      const userId = payload.id;
+      socket.join(`user_${userId}`);
+      console.log(`✅ User ${userId} joined their private room`);
     } catch {
       console.warn('❌ Invalid token for socket auth');
     }
@@ -126,12 +95,10 @@ io.on('connection', (socket) => {
     if (userId) socket.leave(`user_${userId}`);
   });
 
-  socket.on('disconnect', () => console.log('Socket disconnected', socket.id));
+  socket.on('disconnect', () => console.log('socket disconnected', socket.id));
 });
 
-// ===================
-// Start Mongo + Server
-// ===================
+// Mongo + server
 (async function start() {
   try {
     await mongoose.connect(MONGO_URI);
@@ -140,7 +107,7 @@ io.on('connection', (socket) => {
     const PORT = process.env.PORT || 8000;
     server.listen(PORT, '0.0.0.0', () => console.log(`🚀 Backend listening on ${PORT}`));
   } catch (err) {
-    console.error('❌ Failed to start server:', err);
+    console.error('Failed to start server:', err);
     process.exit(1);
   }
 })();

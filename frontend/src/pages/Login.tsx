@@ -8,13 +8,13 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Google OAuth login
+  // ===== Google OAuth Login =====
   const handleGoogleLogin = () => {
-    // Redirect user to Render backend Google OAuth route
+    // Redirect to your Render backend Google OAuth route
     window.location.href = `${import.meta.env.VITE_API_BASE}/api/auth/google`;
   };
 
-  // Guest login
+  // ===== Guest Login =====
   const handleGuest = async () => {
     setLoading(true);
     try {
@@ -33,7 +33,7 @@ const Login: React.FC = () => {
     }
   };
 
-  // Manual login
+  // ===== Manual Login =====
   const handleManualLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -53,7 +53,7 @@ const Login: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md p-8 space-y-6 transition">
-        {/* Logo */}
+        {/* Logo & Header */}
         <div className="text-center">
           <div className="mx-auto w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow">
             WN
