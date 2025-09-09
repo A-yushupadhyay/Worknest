@@ -7,37 +7,39 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_CALLBACK_URL,
+      callbackURL: process.env.GOOGLE_CALLBACK_URL, // must match Google Console
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        // Use email to find existing user
         const email = profile.emails[0].value;
+
         let user = await User.findOne({ email });
 
         if (!user) {
-          // Create new user if not found
+          // Create new user with Google data
           user = await User.create({
             name: profile.displayName,
             email,
             googleId: profile.id,
             avatarUrl: profile.photos?.[0]?.value || "",
-            passwordHash: "", // empty because OAuth
+            passwordHash: "", // empty because OAuth login
           });
+        } else {
+          // Update Google fields if missing
+          if (!user.googleId) user.googleId = profile.id;
+          if (!user.avatarUrl && profile.photos?.[0]?.value) {
+            user.avatarUrl = profile.photos[0].value;
+          }
+          await user.save();
         }
 
-        done(null, user);
+        return done(null, user);
       } catch (err) {
-        done(err, null);
+        console.error("GoogleStrategy error:", err);
+        return done(err, null);
       }
     }
   )
 );
 
-// Required for passport to work
-passport.serializeUser((user, done) => done(null, user._id));
-passport.deserializeUser((id, done) => {
-  User.findById(id)
-    .then((user) => done(null, user))
-    .catch((err) => done(err, null));
-});
+// ❌ No serializeUser/deserializeUser because we're not using sessions
