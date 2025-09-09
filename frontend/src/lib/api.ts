@@ -2,7 +2,7 @@ import axios, { AxiosError } from "axios";
 import type { AxiosInstance } from "axios";
 
 const API: AxiosInstance = axios.create({
-  baseURL: `${import.meta.env.VITE_API_BASE}/api`,
+  baseURL: `${import.meta.env.VITE_API_BASE}`,
   withCredentials: true,
   timeout: 15000, // ⏱️ fail fast if backend is slow
 });
