@@ -11,7 +11,7 @@ const Login: React.FC = () => {
   // Google OAuth login
   const handleGoogleLogin = () => {
     // Redirect user to Render backend Google OAuth route
-    window.location.href = `${process.env.VITE_API_BASE}/api/auth/google`;
+    window.location.href = `${import.meta.env.VITE_API_BASE}/api/auth/google`;
   };
 
   // Guest login
