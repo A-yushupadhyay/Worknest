@@ -8,12 +8,13 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Google OAuth
+  // Google OAuth login
   const handleGoogleLogin = () => {
-    window.location.href = "https://worknest-0zer.onrender.com/api/auth/google";
+    // Redirect user to Render backend Google OAuth route
+    window.location.href = `${process.env.VITE_API_BASE}/api/auth/google`;
   };
 
-  // Guest login (production-level)
+  // Guest login
   const handleGuest = async () => {
     setLoading(true);
     try {
@@ -25,8 +26,8 @@ const Login: React.FC = () => {
       localStorage.setItem("user", JSON.stringify(res.data.user));
       navigate("/dashboard");
     } catch (err) {
-      console.error("guest login failed", err);
-      alert("Guest login failed. Please check if guest user exists in DB.");
+      console.error("Guest login failed", err);
+      alert("Guest login failed. Ensure guest user exists in DB.");
     } finally {
       setLoading(false);
     }
@@ -42,7 +43,7 @@ const Login: React.FC = () => {
       localStorage.setItem("user", JSON.stringify(res.data.user));
       navigate("/dashboard");
     } catch (err) {
-      console.error("manual login failed", err);
+      console.error("Manual login failed", err);
       alert("Invalid credentials");
     } finally {
       setLoading(false);
@@ -52,7 +53,7 @@ const Login: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md p-8 space-y-6 transition">
-        {/* Logo / Title */}
+        {/* Logo */}
         <div className="text-center">
           <div className="mx-auto w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow">
             WN
@@ -65,7 +66,7 @@ const Login: React.FC = () => {
           </p>
         </div>
 
-        {/* OAuth */}
+        {/* Google OAuth */}
         <button
           onClick={handleGoogleLogin}
           className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-medium shadow transition"
@@ -78,6 +79,7 @@ const Login: React.FC = () => {
           Continue with Google
         </button>
 
+        {/* Guest login */}
         <button
           onClick={handleGuest}
           disabled={loading}
@@ -93,7 +95,7 @@ const Login: React.FC = () => {
           <div className="flex-grow border-t border-gray-200 dark:border-gray-700" />
         </div>
 
-        {/* Manual Form */}
+        {/* Manual login */}
         <form onSubmit={handleManualLogin} className="space-y-4">
           <input
             type="email"

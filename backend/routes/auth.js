@@ -15,20 +15,13 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "All fields required" });
     }
 
-    // Check if user exists
     const existing = await User.findOne({ email });
-    if (existing) {
-      return res.status(400).json({ error: "User already exists" });
-    }
+    if (existing) return res.status(400).json({ error: "User already exists" });
 
-    // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
-
-    // Create new user
     const user = new User({ name, email, passwordHash });
     await user.save();
 
-    // Issue JWT
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
@@ -63,10 +56,7 @@ router.post('/login', async (req, res) => {
       { expiresIn: '1d' }
     );
 
-    res.json({
-      token,
-      user: { id: user._id, name: user.name, email: user.email }
-    });
+    res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ msg: 'Server error' });
@@ -74,35 +64,42 @@ router.post('/login', async (req, res) => {
 });
 
 // ====== Google OAuth ======
+// Step 1: Redirect to Google
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
+// Step 2: Google callback
 router.get(
   '/google/callback',
   passport.authenticate('google', { session: false, failureRedirect: '/auth/failure' }),
   (req, res) => {
-    const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
-    const redirectUrl = `${process.env.FRONTEND_URL}/dashboard?token=${token}`;
-    res.redirect(redirectUrl);
+    try {
+      const token = jwt.sign({ id: req.user._id, email: req.user.email }, process.env.JWT_SECRET, {
+        expiresIn: '1d',
+      });
+      const redirectUrl = `${process.env.FRONTEND_URL}/dashboard?token=${token}`;
+      res.redirect(redirectUrl);
+    } catch (err) {
+      console.error("Google callback error:", err);
+      res.redirect(`${process.env.FRONTEND_URL}/login?error=oauth_failed`);
+    }
   }
 );
 
-// ====== Me (verify token & return user) ======
+// ====== Get current user ======
 router.get('/me', authProtection, async (req, res) => {
   try {
-    // const header = req.header('Authorization');
-    // if (!header) return res.status(401).json({ msg: 'No token' });
-
-    // const token = header.replace('Bearer ', '');
-    // const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     const user = await User.findById(req.user._id).select('-passwordHash');
     if (!user) return res.status(404).json({ msg: 'User not found' });
-
     res.json({ user });
   } catch (err) {
     console.error("Me endpoint error:", err);
     return res.status(401).json({ msg: 'Invalid token' });
   }
+});
+
+// ====== Optional failure endpoint ======
+router.get('/failure', (req, res) => {
+  res.status(401).json({ msg: 'OAuth login failed' });
 });
 
 module.exports = router;
