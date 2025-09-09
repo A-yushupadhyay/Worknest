@@ -1,10 +1,15 @@
+// /src/lib/api.ts
 import axios, { AxiosError } from "axios";
 import type { AxiosInstance } from "axios";
 
+// Ensure base always has /api at the end
+const rawBase = import.meta.env.VITE_API_BASE || "http://localhost:8000";
+const baseURL = rawBase.endsWith("/api") ? rawBase : `${rawBase}/api`;
+
 const API: AxiosInstance = axios.create({
-  baseURL: `${import.meta.env.VITE_API_BASE}`,
+  baseURL,
   withCredentials: true,
-  timeout: 15000, // ⏱️ fail fast if backend is slow
+  timeout: 15000,
 });
 
 // ===== Request Interceptor =====
@@ -26,27 +31,18 @@ API.interceptors.response.use(
     const status = error.response?.status;
     const currentPath = window.location.pathname;
 
-    // Auto logout on 401
     if (status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
 
-      // Only redirect if not already on login/register
       if (!["/login", "/register"].includes(currentPath)) {
         window.location.href = "/login";
       }
     }
 
-    // Redirect to server error page
     if (status === 500) {
       window.location.href = "/server-error";
     }
-
-    // Handle network issues
-    // if (error.code === "ECONNABORTED" || error.message === "Network Error") {
-    //   console.error("Network issue or request timed out");
-    //   alert("Network issue — please check your connection.");
-    // }
 
     return Promise.reject(error);
   }
