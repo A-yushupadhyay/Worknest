@@ -14,8 +14,10 @@ const OAuthRedirect: React.FC = () => {
     if (token) {
       localStorage.setItem("token", token);
 
-      // Fetch user info to save
-      API.get("/auth/me")
+      // Fetch user info with explicit Authorization header
+      API.get("/auth/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
         .then((res) => {
           localStorage.setItem("user", JSON.stringify(res.data.user));
           navigate("/dashboard", { replace: true });
