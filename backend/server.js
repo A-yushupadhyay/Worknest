@@ -1,4 +1,3 @@
-// backend/server.js
 require('dotenv').config();
 const path = require('path');
 const express = require('express');
@@ -13,7 +12,7 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const server = http.createServer(app);
 
-// basic setup & defensive checks
+// basic setup
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) {
@@ -35,65 +34,55 @@ app.use(express.json());
 app.use(passport.initialize());
 require('./config/passport'); // if present
 
-// rate limiter for search route
+// rate limiter
 const searchLimiter = rateLimit({
-  windowMs: 15 * 1000, // 15s
+  windowMs: 15 * 1000,
   max: 8,
   standardHeaders: true,
   legacyHeaders: false
 });
 
-// attach io to req so route handlers can emit
+// attach io
 app.use((req, res, next) => {
   req.io = io;
   next();
 });
 
-// Routes
+// API routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/orgs', require('./routes/orgs'));
 app.use('/api/projects', require('./routes/projects'));
 app.use('/api/tasks', require('./routes/tasks'));
 app.use('/api/members', require('./routes/members'));
 app.use('/api/comments', require('./routes/comments'));
-// ✅ Updated line for notifications route
-const { router: notificationRouter, createNotification } = require('./routes/notifications');
+const { router: notificationRouter } = require('./routes/notifications');
 app.use('/api/notifications', notificationRouter);
-
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/search', searchLimiter, require('./routes/search'));
-// Serve React build
-app.use(express.static(path.join(__dirname, 'frontend-build')));
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend-build', 'index.html'));
-});
 
 // health check
 app.get('/health', (req, res) => res.json({ ok: true }));
 
-// socket listeners
+// socket.io handlers
 io.on('connection', (socket) => {
   console.log('🔌 socket connected', socket.id);
 
-  // ✅ authenticate user and join their personal room
   socket.on('auth', ({ token }) => {
     try {
       const payload = jwt.verify(token, process.env.JWT_SECRET);
       const userId = payload.id;
       socket.join(`user_${userId}`);
       console.log(`✅ User ${userId} joined their private room`);
-    } catch (err) {
-      console.warn('❌ Invalid token provided for socket auth');
+    } catch {
+      console.warn('❌ Invalid token for socket auth');
     }
   });
 
-  // existing project/org rooms
-// Join rooms
-  socket.on('join', ({ token, projectId, orgId, userId }) => {
+  socket.on('join', ({ projectId, orgId, userId }) => {
     if (orgId) socket.join(`org_${orgId}`);
     if (projectId) socket.join(`project_${projectId}`);
-    if (userId) socket.join(`user_${userId}`); // ✅ personal room for notifications
+    if (userId) socket.join(`user_${userId}`);
 
     if (projectId) {
       socket.to(`project_${projectId}`).emit('presence:update', { id: socket.id, online: true });
@@ -114,8 +103,6 @@ io.on('connection', (socket) => {
   try {
     await mongoose.connect(MONGO_URI);
     console.log('✅ Connected to MongoDB');
-    mongoose.connection.on('error', (err) => console.error('Mongo connection error:', err));
-    mongoose.connection.once('open', () => console.log('MongoDB connected'));
 
     const PORT = process.env.PORT || 8000;
     server.listen(PORT, '0.0.0.0', () => console.log(`🚀 Backend listening on ${PORT}`));
